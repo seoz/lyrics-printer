@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, Columns, AlignLeft, Info, Edit3, Check } from 'lucide-react';
+import { Printer, Columns, AlignLeft, Info, Edit3, Check, Type } from 'lucide-react';
 import { motion } from 'motion/react';
 import { LyricsResult } from '../services/geminiService';
 
@@ -10,12 +10,14 @@ interface LyricsDisplayProps {
 export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
   const [isTwoColumns, setIsTwoColumns] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
+  const [fontSize, setFontSize] = useState(data.fontSize || 13);
   const [editableLyrics, setEditableLyrics] = useState(data.lyrics);
 
-  // Reset editable lyrics when new data arrives
+  // Reset editable lyrics and font size when new data arrives
   useEffect(() => {
     setEditableLyrics(data.lyrics);
-  }, [data.lyrics]);
+    if (data.fontSize) setFontSize(data.fontSize);
+  }, [data.lyrics, data.fontSize]);
 
   // Parse lyrics into structured stanzas/sections
   const parseLyrics = (text: string) => {
@@ -69,15 +71,20 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
 
   const processedStanzas = parseLyrics(editableLyrics);
 
-  // Paging logic based on processed stanzas
+  // Paging logic based on processed stanzas and font size
   const pages: (typeof processedStanzas)[] = [];
   let currentPageItems: typeof processedStanzas = [];
   let currentLength = 0;
   
+  // Base character limit for 13px font
+  const baseLimit = 1750;
+  // Adjust limit based on font size (inverse relationship)
+  // We use a power of 1.1 instead of linear to better approximate vertical/horizontal space usage
+  const adjustedLimit = Math.floor(baseLimit * Math.pow(13 / fontSize, 1.2));
+
   processedStanzas.forEach((item) => {
     // Aggressive paging to ensure bottom padding is respected
-    // ~1750 chars is safe for 2 columns with headers and footers given the updated bottom margin
-    if ((currentLength + item.content.length) > 1750 && currentPageItems.length > 0) {
+    if ((currentLength + item.content.length) > adjustedLimit && currentPageItems.length > 0) {
       pages.push(currentPageItems);
       currentPageItems = [item];
       currentLength = item.content.length;
@@ -92,7 +99,8 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
     try {
       const printData = {
         ...data,
-        lyrics: editableLyrics
+        lyrics: editableLyrics,
+        fontSize // Pass font size for print-specific rendering if needed elsewhere
       };
 
       if (window.self !== window.top) {
@@ -126,6 +134,20 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
             {isTwoColumns ? <AlignLeft size={18} /> : <Columns size={18} />}
             <span className="hidden sm:inline">{isTwoColumns ? "Single Column" : "Two Columns"}</span>
           </button>
+
+          <div className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium shadow-sm">
+            <Type size={18} className="text-gray-400" />
+            <input 
+              type="range" 
+              min="10" 
+              max="24" 
+              step="1"
+              value={fontSize}
+              onChange={(e) => setFontSize(parseInt(e.target.value))}
+              className="w-20 sm:w-32 h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-black"
+            />
+            <span className="min-w-[2ch]">{fontSize}</span>
+          </div>
 
           <button
             onClick={() => setIsEditing(!isEditing)}
@@ -190,16 +212,18 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                 ) : (
                   <div 
                     className={`
-                      font-sans text-[13px] leading-relaxed text-gray-800 h-full
+                      font-sans leading-relaxed text-gray-800 h-full
                       ${isTwoColumns ? 'sheet-columns' : 'single-column'}
                     `}
+                    style={{ fontSize: `${fontSize}px` }}
                   >
                     {pageText.map((item, i) => (
                       <div 
                         key={item.key} 
                         className={`
-                          stanza-item ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
+                          stanza-item ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
                         `}
+                        style={item.type === 'header' ? { fontSize: `${Math.max(fontSize - 3, 9)}px` } : {}}
                       >
                         {item.type === 'header' ? (
                           item.content

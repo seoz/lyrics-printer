@@ -19,6 +19,7 @@ export interface LyricsResult {
   lyrics: string;
   album?: string;
   year?: string;
+  fontSize?: number;
 }
 
 export async function processLyrics(
