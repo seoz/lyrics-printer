@@ -1,20 +1,61 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# LyricSheet 🎵
 
-# Run and deploy your AI Studio app
+LyricSheet is a professional, AI-powered tool designed to convert your song lyrics or screenshots into beautiful, printable 2-column US Letter sheets. Whether you're a performing musician, a choir director, or just a music enthusiast, LyricSheet provides the perfect layout for your collection.
 
-This contains everything you need to run your app locally.
+## ✨ Features
 
-View your app in AI Studio: https://ai.studio/apps/ba77afcf-b03b-482e-9e07-6055afb3b558
+- **2-Column Layout:** Specifically optimized for US Letter (8.5" x 11") printing, maximizing space while keeping text legible.
+- **AI Processing:** Powered by Google Gemini, the app can clean up messy text or extract lyrics directly from screenshots using OCR.
+- **Smart Formatting:** Maintains stanza breaks and song structure verbatim.
+- **Professional Metadata:** Include album title, release year, and artist information for a complete look.
+- **Instant Print:** Optimized with CSS print media queries for a clean "what you see is what you get" experience.
+- **Interactive UI:** Smooth animations and feedback using Framer Motion.
 
-## Run Locally
+## 🚀 Getting Started
 
-**Prerequisites:**  Node.js
+### Prerequisites
 
+- Node.js (v18 or higher)
+- npm or yarn
+- A Gemini API Key
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <your-repo-url>
+   cd lyricsheet
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure environment variables:
+   Create a `.env` file in the root directory and add your Gemini API key:
+   ```env
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
+
+4. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open your browser and navigate to `http://localhost:3000`.
+
+## 🛠️ Built With
+
+- **React 19** - UI Framework
+- **Vite** - Build Tool
+- **Tailwind CSS** - Styling
+- **Framer Motion** - Animations
+- **Lucide React** - Icons
+- **Google Gemini API** - AI OCR and Text Processing
+
+## 📄 License
+
+SPDX-License-Identifier: Apache-2.0
+
+Built with ❤️ by Daniel Seo
