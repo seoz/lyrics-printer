@@ -17,21 +17,76 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
     setEditableLyrics(data.lyrics);
   }, [data.lyrics]);
 
-  // Simple paging: split lyrics into pages based on stanzas
-  // A rough estimate: ~3000 chars per page in 2 columns
-  const pages: string[] = [];
-  const stanzas = editableLyrics.split(/\n\n+/);
-  let currentPage = "";
+  // Parse lyrics into structured stanzas/sections
+  const parseLyrics = (text: string) => {
+    const lines = text.split('\n');
+    const result: { type: 'header' | 'stanza'; content: string; key: string }[] = [];
+    let currentStanzaLines: string[] = [];
+    
+    lines.forEach((line, i) => {
+      const trimmedLine = line.trim();
+      const isHeader = /^\[.*\]$/.test(trimmedLine) || /^(Chorus|Verse|Bridge|Outro|Intro|Pre-Chorus)/i.test(trimmedLine);
+      
+      if (isHeader) {
+        // Push current stanza if any
+        if (currentStanzaLines.length > 0) {
+          result.push({ 
+            type: 'stanza', 
+            content: currentStanzaLines.join('\n'),
+            key: `stanza-${i}`
+          });
+          currentStanzaLines = [];
+        }
+        result.push({ 
+          type: 'header', 
+          content: trimmedLine,
+          key: `header-${i}`
+        });
+      } else if (trimmedLine === '') {
+        if (currentStanzaLines.length > 0) {
+          result.push({ 
+            type: 'stanza', 
+            content: currentStanzaLines.join('\n'),
+            key: `stanza-${i}`
+          });
+          currentStanzaLines = [];
+        }
+      } else {
+        currentStanzaLines.push(line);
+      }
+    });
+    
+    if (currentStanzaLines.length > 0) {
+      result.push({ 
+        type: 'stanza', 
+        content: currentStanzaLines.join('\n'),
+        key: `stanza-final`
+      });
+    }
+    
+    return result;
+  };
+
+  const processedStanzas = parseLyrics(editableLyrics);
+
+  // Paging logic based on processed stanzas
+  const pages: (typeof processedStanzas)[] = [];
+  let currentPageItems: typeof processedStanzas = [];
+  let currentLength = 0;
   
-  stanzas.forEach((stanza) => {
-    if ((currentPage.length + stanza.length) > 3200 && currentPage.length > 0) {
-      pages.push(currentPage);
-      currentPage = stanza;
+  processedStanzas.forEach((item) => {
+    // Aggressive paging to ensure bottom padding is respected
+    // ~1800 chars is safer for 2 columns with headers and footers
+    if ((currentLength + item.content.length) > 1800 && currentPageItems.length > 0) {
+      pages.push(currentPageItems);
+      currentPageItems = [item];
+      currentLength = item.content.length;
     } else {
-      currentPage = currentPage ? `${currentPage}\n\n${stanza}` : stanza;
+      currentPageItems.push(item);
+      currentLength += item.content.length;
     }
   });
-  if (currentPage) pages.push(currentPage);
+  if (currentPageItems.length > 0) pages.push(currentPageItems);
 
   const handlePrint = () => {
     try {
@@ -57,18 +112,9 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
     }
   };
 
-  const openInNewTab = () => {
-    const printData = {
-      ...data,
-      lyrics: editableLyrics
-    };
-    const url = new URL(window.location.href);
-    url.hash = `#popout=${encodeURIComponent(JSON.stringify(printData))}`;
-    window.open(url.toString(), '_blank');
-  };
 
   return (
-    <div className="w-full max-w-[9.5in] mx-auto mt-8">
+    <div className="w-full max-w-[9.5in] mx-auto mt-8 print:max-w-none print:w-auto print:m-0">
       {/* Controls Bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6 px-6 no-print">
         <div className="flex items-center gap-2">
@@ -94,31 +140,12 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
         
         <div className="flex items-center gap-3">
           <button
-            onClick={openInNewTab}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm"
-            title="Open in a new tab for unrestricted printing"
-          >
-            <AlignLeft size={18} className="rotate-90" />
-            <span className="hidden sm:inline">Open in New Window</span>
-          </button>
-
-          <button
             onClick={handlePrint}
             className="flex items-center gap-2 px-6 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors shadow-lg active:scale-95"
           >
             <Printer size={18} />
             <span>Print Lyrics</span>
           </button>
-        </div>
-      </div>
-
-      <div className="no-print px-6 mb-4">
-        <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl text-xs text-amber-900 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Info size={16} className="text-amber-500 shrink-0" />
-            <p><strong>Printing Tip:</strong> If the print dialog doesn't appear, use the <strong>Open in New Window</strong> button to bypass preview restrictions.</p>
-          </div>
-          <button onClick={openInNewTab} className="bg-amber-200 hover:bg-amber-300 px-3 py-1 rounded-lg font-bold transition-colors">Launch Full Standalone version</button>
         </div>
       </div>
 
@@ -163,16 +190,30 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                 ) : (
                   <div 
                     className={`
-                      whitespace-pre-wrap font-sans text-[13px] leading-relaxed text-gray-800 h-full
+                      font-sans text-[13px] leading-relaxed text-gray-800 h-full
                       ${isTwoColumns ? 'sheet-columns' : 'single-column'}
                     `}
                   >
-                    {pageText}
+                    {pageText.map((item, i) => (
+                      <div 
+                        key={item.key} 
+                        className={`
+                          break-inside-avoid
+                          ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
+                        `}
+                      >
+                        {item.type === 'header' ? (
+                          item.content
+                        ) : (
+                          <div className="whitespace-pre-wrap">{item.content}</div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 )}
               </main>
 
-              <footer className="mt-8 pt-4 border-t border-gray-100 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] flex justify-between items-center">
+              <footer className="mt-auto pt-4 pb-4 border-t border-gray-100 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] flex justify-between items-center whitespace-nowrap">
                 <span>LyricSheet Pro • US Letter 8.5" x 11"</span>
                 <span className="opacity-50">Page {index + 1} of {pages.length}</span>
               </footer>

@@ -1,6 +1,17 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let genAI: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY environment variable is required");
+    }
+    genAI = new GoogleGenAI({ apiKey });
+  }
+  return genAI;
+}
 
 export interface LyricsResult {
   title: string;
@@ -40,6 +51,7 @@ export async function processLyrics(
       parts.push({ inlineData: imageInlineData });
     }
 
+    const ai = getAI();
     const result = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: [{ role: "user", parts }],

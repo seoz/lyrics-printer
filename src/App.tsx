@@ -75,7 +75,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6">
+    <div className="min-h-screen py-12 px-4 sm:px-6 print:p-0 print:bg-white">
       {/* App Header */}
       <header className="max-w-4xl mx-auto text-center mb-12 no-print">
         <motion.div 
@@ -104,7 +104,7 @@ export default function App() {
 
       </header>
 
-      <main className="max-w-6xl mx-auto">
+      <main className="max-w-6xl mx-auto print:max-w-none print:m-0 print:p-0">
         <AnimatePresence mode="wait">
           {!lyricsData ? (
             <motion.div
