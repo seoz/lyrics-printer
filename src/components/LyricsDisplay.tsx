@@ -76,8 +76,8 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
   
   processedStanzas.forEach((item) => {
     // Aggressive paging to ensure bottom padding is respected
-    // ~1800 chars is safer for 2 columns with headers and footers
-    if ((currentLength + item.content.length) > 2200 && currentPageItems.length > 0) {
+    // ~1500 chars is safer for 2 columns with headers and footers to avoid creating a 3rd column
+    if ((currentLength + item.content.length) > 1600 && currentPageItems.length > 0) {
       pages.push(currentPageItems);
       currentPageItems = [item];
       currentLength = item.content.length;
@@ -179,7 +179,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                 </header>
               )}
 
-              <main className="flex-1 overflow-visible">
+              <main className="flex-1 min-h-0 overflow-visible relative block">
                 {isEditing ? (
                   <textarea
                     value={editableLyrics}
@@ -198,7 +198,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                       <div 
                         key={item.key} 
                         className={`
-                          ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1 break-after-avoid' : 'mb-5'}
+                          stanza-item ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
                         `}
                       >
                         {item.type === 'header' ? (

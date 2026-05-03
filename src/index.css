@@ -56,20 +56,29 @@
   }
 
   .sheet-columns {
-    column-count: 2;
-    column-gap: 0.5in;
-    column-rule: 1px solid #f0f0f0;
-    column-fill: auto;
-    height: 100%;
-    width: 100%;
-    display: block;
+    column-count: 2 !important;
+    column-width: auto !important;
+    column-gap: 0.5in !important;
+    column-rule: 1px solid #f0f0f0 !important;
+    column-fill: auto !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    overflow: hidden !important;
   }
 
   .single-column {
-    column-count: 1;
-    height: 100%;
-    width: 100%;
-    display: block;
+    column-count: 1 !important;
+    height: 100% !important;
+    width: 100% !important;
+    display: block !important;
+    overflow: visible !important;
+  }
+
+  .stanza-item {
+    break-inside: avoid-column !important;
+    page-break-inside: avoid !important;
+    display: block !important;
   }
 
   /* Page break visual for preview */
