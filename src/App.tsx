@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LyricsInputForm } from './components/LyricsInputForm';
 import { LyricsDisplay } from './components/LyricsDisplay';
 import { processLyrics, LyricsResult } from './services/geminiService';
+import { playNotificationSound } from './lib/audio';
 
 export default function App() {
   const [lyricsData, setLyricsData] = useState<LyricsResult | null>(null);
@@ -26,6 +27,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(decodeURIComponent(dataString));
         setLyricsData(parsed);
+        playNotificationSound();
         if (isPrint) {
           timeoutId = window.setTimeout(() => {
             window.print();
@@ -58,6 +60,7 @@ export default function App() {
     
     if (result) {
       setLyricsData(result);
+      playNotificationSound();
     } else {
       setError("AI Processing failed. This can happen due to safety filters, network issues, or internal errors. Please try again with different text or a clearer image, or check the browser console for details.");
     }
