@@ -72,27 +72,50 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data, onReset }) =
 
   const processedStanzas = parseLyrics(editableLyrics);
 
-  // Paging logic based on processed stanzas and font size
+  // Paging logic based on estimated vertical height (px)
+  // sheet is 11in tall. At 96dpi, that's 1056px.
+  // Paddings: 0.75in top (72px), 1.0in bottom (96px).
+  // Total available inside paddings: 1056 - 72 - 96 = 888px.
+  const SHEET_CONTENT_HEIGHT = 888;
+  const PAGE_1_HEADER_HEIGHT = 140; // Title/Artist + margin
+  const PAGE_N_HEADER_HEIGHT = 45;  // (Page X) header + margin
+  const FOOTER_RESERVE = 30;        // Space for page number and bottom buffer
+
   const pages: (typeof processedStanzas)[] = [];
   let currentPageItems: typeof processedStanzas = [];
-  let currentLength = 0;
-  
-  // Base character limit for 13px font
-  // 1750 is safe for 2 columns, ~950 is safe for 1 column to avoid overflow
-  const baseLimit = isTwoColumns ? 1750 : 950;
-  // Adjust limit based on font size (inverse relationship)
-  // We use a power of 1.2 to better approximate spatial usage
-  const adjustedLimit = Math.floor(baseLimit * Math.pow(13 / fontSize, 1.2));
+  let currentUsedHeight = 0;
 
   processedStanzas.forEach((item) => {
-    // Aggressive paging to ensure bottom padding is respected
-    if ((currentLength + item.content.length) > adjustedLimit && currentPageItems.length > 0) {
+    const lineHeight = fontSize * 1.6;
+    let itemHeight = 0;
+    
+    if (item.type === 'header') {
+      // Header has mt-6 (24px) mb-2 (8px) and border/padding
+      const headerFontSize = Math.max(fontSize - 3, 9);
+      itemHeight = headerFontSize * 1.6 + 40; 
+    } else {
+      // Stanza has mb-5 (20px)
+      const lineCount = item.content.split('\n').length;
+      itemHeight = lineCount * lineHeight + 20;
+    }
+
+    const isFirstPage = pages.length === 0;
+    const headerSpace = isFirstPage ? PAGE_1_HEADER_HEIGHT : PAGE_N_HEADER_HEIGHT;
+    const availableHeight = SHEET_CONTENT_HEIGHT - headerSpace - FOOTER_RESERVE;
+    
+    // Capacity is doubled for two columns, but shifted by header space
+    const capacity = isTwoColumns ? availableHeight * 2 : availableHeight;
+    
+    // Safety cushion to prevent overflow (especially helpful for column wrapping)
+    const safetyBuffer = isTwoColumns ? 40 : 20;
+
+    if ((currentUsedHeight + itemHeight) > (capacity - safetyBuffer) && currentPageItems.length > 0) {
       pages.push(currentPageItems);
       currentPageItems = [item];
-      currentLength = item.content.length;
+      currentUsedHeight = itemHeight;
     } else {
       currentPageItems.push(item);
-      currentLength += item.content.length;
+      currentUsedHeight += itemHeight;
     }
   });
   if (currentPageItems.length > 0) pages.push(currentPageItems);
