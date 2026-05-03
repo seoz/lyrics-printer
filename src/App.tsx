@@ -145,8 +145,9 @@ export default function App() {
         </AnimatePresence>
       </main>
       
-      <footer className="mt-24 text-center text-gray-400 text-sm no-print">
+      <footer className="mt-24 text-center text-gray-400 text-sm no-print pb-8">
         <p>© {new Date().getFullYear()} LyricSheet • AI-Optimized Print Layouts</p>
+        <p className="mt-2 font-medium">Built by Daniel Seo</p>
       </footer>
     </div>
   );
