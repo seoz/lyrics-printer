@@ -76,8 +76,8 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
   
   processedStanzas.forEach((item) => {
     // Aggressive paging to ensure bottom padding is respected
-    // ~1500 chars is safer for 2 columns with headers and footers to avoid creating a 3rd column
-    if ((currentLength + item.content.length) > 1600 && currentPageItems.length > 0) {
+    // ~1750 chars is safe for 2 columns with headers and footers given the updated bottom margin
+    if ((currentLength + item.content.length) > 1750 && currentPageItems.length > 0) {
       pages.push(currentPageItems);
       currentPageItems = [item];
       currentLength = item.content.length;
