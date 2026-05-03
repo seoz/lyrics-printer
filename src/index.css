@@ -85,10 +85,10 @@
     margin-left: 0;
   }
 
-  .stanza-item {
-    break-inside: avoid-column !important;
-    page-break-inside: avoid !important;
+  .line-item {
     display: block !important;
+    width: 100%;
+    min-height: 1.2em;
   }
 
   /* Page break visual for preview */

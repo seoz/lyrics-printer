@@ -20,105 +20,73 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data, onReset }) =
     if (data.fontSize) setFontSize(data.fontSize);
   }, [data.lyrics, data.fontSize]);
 
-  // Parse lyrics into structured stanzas/sections
+  // Parse lyrics into individual lines with metadata
   const parseLyrics = (text: string) => {
     const lines = text.trim().split('\n');
-    const result: { type: 'header' | 'stanza'; content: string; key: string }[] = [];
-    let currentStanzaLines: string[] = [];
-    
-    lines.forEach((line, i) => {
+    return lines.map((line, i) => {
       const trimmedLine = line.trim();
       const isHeader = /^\[.*\]$/.test(trimmedLine) || /^(Chorus|Verse|Bridge|Outro|Intro|Pre-Chorus)/i.test(trimmedLine);
       
-      if (isHeader) {
-        // Push current stanza if any
-        if (currentStanzaLines.length > 0) {
-          result.push({ 
-            type: 'stanza', 
-            content: currentStanzaLines.join('\n'),
-            key: `stanza-${i}`
-          });
-          currentStanzaLines = [];
-        }
-        result.push({ 
-          type: 'header', 
-          content: trimmedLine,
-          key: `header-${i}`
-        });
-      } else if (trimmedLine === '') {
-        if (currentStanzaLines.length > 0) {
-          result.push({ 
-            type: 'stanza', 
-            content: currentStanzaLines.join('\n'),
-            key: `stanza-${i}`
-          });
-          currentStanzaLines = [];
-        }
-      } else {
-        currentStanzaLines.push(line);
-      }
+      return {
+        type: isHeader ? 'header' as const : (trimmedLine === '' ? 'empty' as const : 'lyric' as const),
+        content: line,
+        key: `line-${i}`
+      };
     });
-    
-    if (currentStanzaLines.length > 0) {
-      result.push({ 
-        type: 'stanza', 
-        content: currentStanzaLines.join('\n'),
-        key: `stanza-final`
-      });
-    }
-    
-    return result;
   };
 
-  const processedStanzas = parseLyrics(editableLyrics);
+  const processedLines = parseLyrics(editableLyrics);
 
   // Paging logic based on estimated vertical height (px)
-  // sheet is 11in tall. At 96dpi, that's 1056px.
-  // Paddings: 0.75in top (72px), 1.0in bottom (96px).
-  // Total available inside paddings: 1056 - 72 - 96 = 888px.
   const SHEET_CONTENT_HEIGHT = 888;
-  const PAGE_1_HEADER_HEIGHT = 140; // Title/Artist + margin
-  const PAGE_N_HEADER_HEIGHT = 45;  // (Page X) header + margin
-  const FOOTER_RESERVE = 30;        // Space for page number and bottom buffer
+  const PAGE_1_HEADER_HEIGHT = 140; 
+  const PAGE_N_HEADER_HEIGHT = 45;  
+  const FOOTER_RESERVE = 30;        
 
-  const pages: (typeof processedStanzas)[] = [];
-  let currentPageItems: typeof processedStanzas = [];
+  const pages: (typeof processedLines)[] = [];
+  let currentPageLines: typeof processedLines = [];
   let currentUsedHeight = 0;
 
-  processedStanzas.forEach((item) => {
+  processedLines.forEach((item, index) => {
     const lineHeight = fontSize * 1.6;
     let itemHeight = 0;
     
     if (item.type === 'header') {
-      // Header has mt-6 (24px) mb-2 (8px) and border/padding
       const headerFontSize = Math.max(fontSize - 3, 9);
-      itemHeight = headerFontSize * 1.6 + 40; 
+      // Header has mt-6 mb-1 pb-1 and border-b
+      // mt-6 (24px) + line (headerFontSize * 1.6) + pb-1 (4px) + border (1px) + mb-1 (4px)
+      itemHeight = 24 + (headerFontSize * 1.6) + 4 + 1 + 4; 
+    } else if (item.type === 'empty') {
+      itemHeight = lineHeight * 0.8;
     } else {
-      // Stanza has mb-5 (20px)
-      const lineCount = item.content.split('\n').length;
-      itemHeight = lineCount * lineHeight + 20;
+      itemHeight = lineHeight;
     }
 
     const isFirstPage = pages.length === 0;
     const headerSpace = isFirstPage ? PAGE_1_HEADER_HEIGHT : PAGE_N_HEADER_HEIGHT;
     const availableHeight = SHEET_CONTENT_HEIGHT - headerSpace - FOOTER_RESERVE;
     
-    // Capacity is doubled for two columns, but shifted by header space
     const capacity = isTwoColumns ? availableHeight * 2 : availableHeight;
-    
-    // Safety cushion to prevent overflow (especially helpful for column wrapping)
     const safetyBuffer = isTwoColumns ? 40 : 20;
 
-    if ((currentUsedHeight + itemHeight) > (capacity - safetyBuffer) && currentPageItems.length > 0) {
-      pages.push(currentPageItems);
-      currentPageItems = [item];
+    // Lookahead: if this is a header, check if the next line fits too
+    let totalNeeded = itemHeight;
+    if (item.type === 'header' && index < processedLines.length - 1) {
+      const nextLine = processedLines[index + 1];
+      const nextLineHeight = nextLine.type === 'header' ? 40 : (nextLine.type === 'empty' ? lineHeight * 0.8 : lineHeight);
+      totalNeeded += nextLineHeight;
+    }
+
+    if ((currentUsedHeight + totalNeeded) > (capacity - safetyBuffer) && currentPageLines.length > 0) {
+      pages.push(currentPageLines);
+      currentPageLines = [item];
       currentUsedHeight = itemHeight;
     } else {
-      currentPageItems.push(item);
+      currentPageLines.push(item);
       currentUsedHeight += itemHeight;
     }
   });
-  if (currentPageItems.length > 0) pages.push(currentPageItems);
+  if (currentPageLines.length > 0) pages.push(currentPageLines);
 
   const handlePrint = () => {
     try {
@@ -254,15 +222,13 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data, onReset }) =
                       <div 
                         key={item.key} 
                         className={`
-                          stanza-item ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
+                          line-item
+                          ${item.type === 'header' ? 'mt-6 mb-1 first:mt-0 font-bold uppercase tracking-widest text-gray-400 border-b border-gray-100 pb-1' : ''}
+                          ${item.type === 'empty' ? 'h-4' : ''}
                         `}
                         style={item.type === 'header' ? { fontSize: `${Math.max(fontSize - 3, 9)}px` } : {}}
                       >
-                        {item.type === 'header' ? (
-                          item.content
-                        ) : (
-                          <div className="whitespace-pre-wrap">{item.content}</div>
-                        )}
+                        {item.type !== 'empty' && item.content}
                       </div>
                     ))}
                   </div>
