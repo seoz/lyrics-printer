@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+@layer utilities {
+  @media print {
+    @page {
+      size: letter;
+      margin: 0in; /* No margin on @page to control it via the sheet div */
+    }
+
+    .no-print {
+      display: none !important;
+    }
+    
+    body {
+      background-color: white !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .print-sheet {
+      width: 8.5in !important;
+      min-height: 11in !important;
+      padding: 0.75in 0.5in !important;
+      margin: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+      background: white !important;
+      page-break-after: always;
+    }
+  }
+
+  /* Sheet styles for preview */
+  .sheet {
+    width: 8.5in;
+    min-height: 11in;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.12);
+    padding: 0.75in 0.5in;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-sizing: border-box;
+  }
+
+  .sheet-columns {
+    column-count: 2;
+    column-gap: 0.5in;
+    column-rule: 1px solid #f0f0f0;
+    column-fill: auto;
+    flex: 1;
+  }
+
+  .single-column {
+    column-count: 1;
+  }
+
+  /* Page break visual for preview */
+  .preview-page-break {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-top: 10px;
+  }
+
+  .preview-page-break::before {
+    content: 'PAGE BREAK';
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.2rem;
+    color: #cbd5e1;
+    background: #f8fafc;
+    padding: 0 20px;
+    z-index: 1;
+  }
+
+  .preview-page-break::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+    z-index: 0;
+  }
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased min-h-screen;
+}
