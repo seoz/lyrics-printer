@@ -34,6 +34,10 @@
       flex-direction: column !important;
       box-sizing: border-box !important;
     }
+
+    .print-sheet:last-child {
+      page-break-after: auto !important;
+    }
   }
 
   /* Sheet styles for preview */
@@ -56,11 +60,16 @@
     column-gap: 0.5in;
     column-rule: 1px solid #f0f0f0;
     column-fill: auto;
-    flex: 1;
+    height: 100%;
+    width: 100%;
+    display: block;
   }
 
   .single-column {
     column-count: 1;
+    height: 100%;
+    width: 100%;
+    display: block;
   }
 
   /* Page break visual for preview */

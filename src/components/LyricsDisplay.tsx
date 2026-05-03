@@ -19,7 +19,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
 
   // Parse lyrics into structured stanzas/sections
   const parseLyrics = (text: string) => {
-    const lines = text.split('\n');
+    const lines = text.trim().split('\n');
     const result: { type: 'header' | 'stanza'; content: string; key: string }[] = [];
     let currentStanzaLines: string[] = [];
     
@@ -77,7 +77,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
   processedStanzas.forEach((item) => {
     // Aggressive paging to ensure bottom padding is respected
     // ~1800 chars is safer for 2 columns with headers and footers
-    if ((currentLength + item.content.length) > 1800 && currentPageItems.length > 0) {
+    if ((currentLength + item.content.length) > 2200 && currentPageItems.length > 0) {
       pages.push(currentPageItems);
       currentPageItems = [item];
       currentLength = item.content.length;
@@ -198,8 +198,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                       <div 
                         key={item.key} 
                         className={`
-                          break-inside-avoid
-                          ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1' : 'mb-5'}
+                          ${item.type === 'header' ? 'mt-6 mb-2 first:mt-0 font-bold uppercase text-[10px] tracking-widest text-gray-400 border-b border-gray-100 pb-1 break-after-avoid' : 'mb-5'}
                         `}
                       >
                         {item.type === 'header' ? (
@@ -213,9 +212,10 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
                 )}
               </main>
 
-              <footer className="mt-auto pt-4 pb-4 border-t border-gray-100 text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em] flex justify-between items-center whitespace-nowrap">
-                <span>LyricSheet Pro • US Letter 8.5" x 11"</span>
-                <span className="opacity-50">Page {index + 1} of {pages.length}</span>
+              <footer className="absolute bottom-8 left-0 right-0 text-center pointer-events-none">
+                <span className="text-[10px] font-mono text-gray-400 uppercase tracking-[0.2em]">
+                  — {index + 1} —
+                </span>
               </footer>
             </div>
             {index < pages.length - 1 && (
