@@ -44,8 +44,10 @@ export async function processLyrics(
     1. OCR accuracy is priority if an image is provided.
     2. Maintain verbatim lyrics and stanza breaks.
     3. Return Title, Artist, Album, and Year in JSON.
+    4. CRITICAL: If metadata fields (Title, Artist, Album, Year) are provided in the prompt, use those EXACT values in your response. Do not correct, "fix", or change them.
+    5. DO NOT generate an Album title or Release Year if they are not provided in the Metadata section above. If they are missing, leave them empty in the JSON.
     
-    Note: If metadata is unclear, use your internal knowledge to fill it.`;
+    Note: If Title or Artist are missing/incomplete, use your internal knowledge to fill them. But NEVER guess the Album or Year.`;
 
     const parts: any[] = [{ text: prompt }];
     if (imageInlineData) {
@@ -75,7 +77,17 @@ export async function processLyrics(
     const text = result.text;
     if (!text) return null;
     
-    return JSON.parse(text) as LyricsResult;
+    const parsed = JSON.parse(text) as LyricsResult;
+
+    // Guaranteed adherence: Use user input if provided, otherwise use AI suggestions for Title/Artist
+    // For Album and Year, strictly use user input or keep empty.
+    return {
+      ...parsed,
+      title: title.trim() || parsed.title,
+      artist: artist.trim() || parsed.artist,
+      album: album?.trim() || "",
+      year: year?.trim() || "",
+    };
   } catch (error: any) {
     console.error("Gemini processing error:", error);
     return null;
