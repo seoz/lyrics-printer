@@ -124,7 +124,7 @@ export default function App() {
               className="relative"
             >
 
-              <LyricsDisplay data={lyricsData} />
+              <LyricsDisplay data={lyricsData} onReset={reset} />
             </motion.div>
           )}
         </AnimatePresence>

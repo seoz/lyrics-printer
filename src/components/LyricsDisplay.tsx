@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Printer, Columns, AlignLeft, Info, Edit3, Check, Type } from 'lucide-react';
+import { Printer, Columns, AlignLeft, Info, Edit3, Check, Type, RotateCcw } from 'lucide-react';
 import { motion } from 'motion/react';
 import { LyricsResult } from '../services/geminiService';
 
 interface LyricsDisplayProps {
   data: LyricsResult;
+  onReset: () => void;
 }
 
-export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
+export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data, onReset }) => {
   const [isTwoColumns, setIsTwoColumns] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [fontSize, setFontSize] = useState(data.fontSize || 13);
@@ -162,6 +163,14 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
         </div>
         
         <div className="flex items-center gap-3">
+          <button
+            onClick={onReset}
+            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors shadow-sm"
+          >
+            <RotateCcw size={18} />
+            <span className="hidden sm:inline">Reset</span>
+          </button>
+          
           <button
             onClick={handlePrint}
             className="flex items-center gap-2 px-6 py-2 bg-black text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors shadow-lg active:scale-95"
