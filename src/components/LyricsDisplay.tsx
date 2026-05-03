@@ -77,9 +77,10 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
   let currentLength = 0;
   
   // Base character limit for 13px font
-  const baseLimit = 1750;
+  // 1750 is safe for 2 columns, ~950 is safe for 1 column to avoid overflow
+  const baseLimit = isTwoColumns ? 1750 : 950;
   // Adjust limit based on font size (inverse relationship)
-  // We use a power of 1.1 instead of linear to better approximate vertical/horizontal space usage
+  // We use a power of 1.2 to better approximate spatial usage
   const adjustedLimit = Math.floor(baseLimit * Math.pow(13 / fontSize, 1.2));
 
   processedStanzas.forEach((item) => {
@@ -179,7 +180,7 @@ export const LyricsDisplay: React.FC<LyricsDisplayProps> = ({ data }) => {
       >
         {pages.map((pageText, index) => (
           <React.Fragment key={index}>
-            <div className="sheet print-sheet">
+            <div className={`sheet print-sheet ${!isTwoColumns ? 'sheet-single' : ''}`}>
               {index === 0 && (
                 <header className="mb-6 border-b-2 border-black pb-4 flex justify-between items-end">
                   <div className="flex-1">
